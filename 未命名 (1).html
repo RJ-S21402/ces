@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>请假管理</title>
+  <style>
+    /* 全局样式重置与基础设置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+    body {
+      background-color: #fff;
+      color: #333;
+    }
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* 顶部导航栏 */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid #eee;
+    }
+    .header .back-btn,
+    .header .close-btn {
+      font-size: 24px;
+      color: #333;
+    }
+    .header .title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .header .more-btn {
+      font-size: 20px;
+      color: #333;
+    }
+
+    /* 面包屑导航 */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      padding: 12px 24px;
+      background-color: #f5f7fa;
+    }
+    .breadcrumb .icon {
+      color: #397ef6;
+      margin-right: 4px;
+    }
+    .breadcrumb .text {
+      color: #666;
+      margin: 0 8px;
+    }
+    .breadcrumb .current {
+      color: #333;
+    }
+
+    /* 用户信息栏（简化，仅保留性别标识） */
+    .user-info {
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+    }
+    .user-info .gender-icon {
+      font-size: 24px;
+      color: #397ef6;
+      margin-left: 8px;
+    }
+
+    /* 分割线 */
+    .divider {
+      height: 10px;
+      background-color: #f5f7fa;
+    }
+
+    /* 请假信息区域 */
+    .leave-info {
+      padding: 24px;
+      position: relative; /* 添加相对定位，使印章的绝对定位基于此容器 */
+      overflow: hidden; /* 确保在小屏幕上印章不会超出容器 */
+    }
+    .leave-info .title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+    .leave-info .item {
+      display: flex;
+      margin-bottom: 12px;
+    }
+    .leave-info .label {
+      width: 120px;
+      color: #666;
+      flex-shrink: 0; /* 确保标签在小屏幕上不会被压缩 */
+    }
+    .leave-info .value {
+      flex: 1;
+    }
+    .leave-info .status {
+      color: #397ef6;
+    }
+    .leave-info .stamp {
+      position: absolute;
+      right: 15px; /* 向左移动15px */
+      top: 150px;
+      width: 100px;  /* 适当缩小尺寸，更适合手机显示 */
+      height: 100px;
+      background-image: url("C:/Users/hello/Desktop/icon_pass.89bc2387.png");
+      background-size: contain; /* 保持图片比例 */
+      background-repeat: no-repeat;
+      background-position: center;
+      /* 响应式调整 */
+      @media (max-width: 480px) {
+        width: 80px;
+        height: 80px;
+        right: 10px;
+        top: 120px;
+      }
+    }
+
+    /* 办理进度区域 */
+    .process {
+      padding: 0 24px 24px;
+    }
+    .process .title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+    /* 进度容器，用于统一管理连接线 */
+    .process-container {
+      position: relative;
+      padding-left: 32px; /* 为圆圈和线条留出空间 */
+    }
+    /* 连接线 - 贯穿整个流程 */
+    .process-container::before {
+      content: '';
+      position: absolute;
+      left: 10px; /* 与圆圈中心对齐 */
+      top: 20px; /* 从第一个圆圈底部开始 */
+      width: 2px;
+      height: calc(100% - 20px); /* 减去第一个圆圈的高度 */
+      background-color: #397ef6;
+    }
+    .process .item {
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .process .circle {
+      position: absolute;
+      left: -32px; /* 调整到容器左侧 */
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #397ef6;
+      background-color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .process .circle.active {
+      background-color: #397ef6;
+    }
+    .process .circle.active::after {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #fff;
+    }
+    .process .content {
+      padding-bottom: 8px;
+    }
+    .process .step {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .process .step .status {
+      color: #00b42a;
+      font-size: 14px;
+      margin-left: 8px;
+    }
+    .process .operator {
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .process .time {
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部导航栏 -->
+  <div class="header">
+    <a href="#" class="back-btn">&lt;</a>
+    <h1 class="title">请假管理</h1>
+    <a href="#" class="more-btn">...</a>
+  </div>
+
+  <!-- 面包屑导航 -->
+  <div class="breadcrumb">
+    <span class="icon">首页</span>
+    <span class="text">&gt;</span>
+    <span class="current">请假管理</span>
+  </div>
+
+  <!-- 用户信息（简化，仅保留性别标识） -->
+  <div class="user-info">
+    <span class="gender-icon">♂</span>
+  </div>
+
+  <!-- 分割线 -->
+  <div class="divider"></div>
+
+  <!-- 请假信息区域 -->
+  <div class="leave-info">
+    <h2 class="title">请假信息</h2>
+    <div class="stamp"></div> <!-- 图片印章 -->
+    <div class="item">
+      <div class="label">请假类型：</div>
+      <div class="value">节假日及寒暑假请假</div>
+    </div>
+    <div class="item">
+      <div class="label">请假去向：</div>
+      <div class="value"></div>
+    </div>
+    <div class="item">
+      <div class="label">详细地址：</div>
+      <div class="value"></div>
+    </div>
+    <div class="item">
+      <div class="label">开始时间：</div>
+      <div class="value">2025-09-19 17:00:00</div>
+    </div>
+    <div class="item">
+      <div class="label">结束时间：</div>
+      <div class="value">2025-09-21 18:30:00</div>
+    </div>
+    <div class="item">
+      <div class="label">统计时长：</div>
+      <div class="value">天小时分钟</div>
+    </div>
+    <div class="item">
+      <div class="label">紧急联系人：</div>
+      <div class="value"></div>
+    </div>
+    <div class="item">
+      <div class="label">紧急联系人电话：</div>
+      <div class="value"></div>
+    </div>
+    <div class="item">
+      <div class="label">请假理由：</div>
+      <div class="value">周末夜假</div>
+    </div>
+    <div class="item">
+      <div class="label">请假状态：</div>
+      <div class="value status">审核通过</div>
+    </div>
+    <div class="item">
+      <div class="label">销假状态：</div>
+      <div class="value"></div>
+    </div>
+    <div class="item">
+      <div class="label">请假附件：</div>
+      <div class="value"></div>
+    </div>
+  </div>
+
+  <!-- 分割线 -->
+  <div class="divider"></div>
+
+  <!-- 办理进度区域 -->
+  <div class="process">
+    <h2 class="title">办理进度</h2>
+    <div class="process-container">
+      <div class="item">
+        <div class="circle active"></div>
+        <div class="content">
+          <div class="step">申请 <span class="status">申请</span></div>
+          <div class="operator">罗伟杰</div>
+          <div class="time">2025-09-18 15:54</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="circle active"></div>
+        <div class="content">
+          <div class="step">辅导员审核 <span class="status">审核通过</span></div>
+          <div class="operator">黄钰琦</div>
+          <div class="time">2025-09-20</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="circle"></div>
+        <div class="content">
+          <div class="step">结束 <span class="status"></span></div>
+          <div class="operator"></div>
+          <div class="time"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
